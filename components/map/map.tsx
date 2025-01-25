@@ -26,7 +26,7 @@ const Map = () => {
     map.current.on('load', async () => {
       try {
         // Fetch country colors
-        const colorResponse = await fetch('/api/country-colors');
+        const colorResponse = await fetch('/api/countries');
         const countryColors = await colorResponse.json();
 
         // Add country boundaries source
@@ -46,11 +46,7 @@ const Map = () => {
               'case',
               ['boolean', ['feature-state', 'hover'], false],
               '#777777',
-              [
-                'coalesce',
-                ['get', ['get', 'ISO_A3'], ['literal', countryColors]],
-                '#CCCCCC'
-              ]
+              ['coalesce', ['get', ['get', 'ISO_A3'], ['literal', countryColors]], '#CCCCCC']
             ],
             'fill-opacity': 0.7,
           },
