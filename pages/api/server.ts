@@ -1,12 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import SpotifyWebApi from 'spotify-web-api-js';
 
+var SpotifyWebApi = require('spotify-web-api-node');
 type ErrorResponse = {
   error: string;
-};
-
-type SpotifyTokenResponse = {
-  access_token: string;
 };
 
 export default async function handler(
@@ -31,37 +27,23 @@ export default async function handler(
   }
 
   try {
-    // Fetch Spotify Access Token
-    const tokenResponse = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${Buffer.from(`${client_id}:${client_secret}`).toString('base64')}`,
-      },
-      body: new URLSearchParams({
-        grant_type,
-      }),
-    });
+    // Get Access Token
+    const spotifyApi = new SpotifyWebApi(
+      {
+        clientId: client_id,
+        clientSecret: client_secret,
+      }
+    );
 
-    if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      return res
-        .status(tokenResponse.status)
-        .json({ error: `Failed to fetch token: ${errorText}` });
-    }
+    const dataToken = await spotifyApi.clientCredentialsGrant();
+    spotifyApi.setAccessToken(dataToken.body.access_token);
 
-    const { access_token }: SpotifyTokenResponse = await tokenResponse.json();
-
-    // Initialize Spotify API Client
-    const spotifyApi = new SpotifyWebApi();
-    spotifyApi.setAccessToken(access_token);
-
-    // Fetch Top Playlists
-    const data = await spotifyApi.getCategoryPlaylists('toplists', {
-      country: 'GB',
-      limit: 10,
-      offset: 0,
-    });
+    // search playlists for "Top 50 - [Country]"
+    const country = "United Kingdom";
+    const playlistName = `Top 50 - ${country}`;
+    const data = await spotifyApi.search(playlistName, ['playlist'], { limit: 15 });
+    
+    
 
     res.status(200).json(data);
   } catch (err: any) {
