@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMapContext } from '@/contexts/MapContext';
+import { useTheme } from "@/components/theme-provider";
 import MapService from '@/services/mapService';
 import { MapLoadingIndicator } from './MapLoadingIndicator';
 import { fetchTopSongs } from "@/lib/api/itunes";
@@ -16,6 +17,7 @@ interface MapProps {
 export default function Map({ onCountryClick }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const { theme } = useTheme();
   const { 
     countryColors, 
     setCountryColors,
@@ -32,7 +34,9 @@ export default function Map({ onCountryClick }: MapProps) {
       // Initialize map
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11',
+        style: theme === 'dark' 
+          ? 'mapbox://styles/mapbox/dark-v11'
+          : 'mapbox://styles/mapbox/light-v11',
         center: [0, 0],
         zoom: 1.5,
         minZoom: 1,
@@ -72,7 +76,7 @@ export default function Map({ onCountryClick }: MapProps) {
     return () => {
       map.current?.remove();
     };
-  }, []);
+  }, [theme]);
 
   const setupMapLayers = async (colors: Record<string, string>) => {
     if (!map.current) return;
@@ -83,7 +87,7 @@ export default function Map({ onCountryClick }: MapProps) {
       data: '/geojson/countries.geojson',
     });
 
-    // Add layers
+    // Add fill layer
     map.current.addLayer({
       id: 'country-fills',
       type: 'fill',
@@ -93,23 +97,44 @@ export default function Map({ onCountryClick }: MapProps) {
         'fill-color': [
           'case',
           ['boolean', ['feature-state', 'hover'], false],
-          '#777777',
-          ['coalesce', ['get', ['get', 'ISO_A2'], ['literal', colors]], '#6b8620']
+          theme === 'dark' ? '#4a4a4a' : '#cccccc',
+          ['coalesce', ['get', ['get', 'ISO_A2'], ['literal', colors]], 
+            theme === 'dark' ? '#2a2a2a' : '#e5e5e5']
         ],
-        'fill-opacity': 0.7,
+        'fill-opacity': theme === 'dark' ? 0.8 : 0.6,
       },
     });
 
-    // Add borders
+    // Add border layer
     map.current.addLayer({
       id: 'country-borders',
       type: 'line',
       source: 'countries',
       layout: {},
       paint: {
-        'line-color': '#000000',
-        'line-width': 1,
+        'line-color': theme === 'dark' ? '#B0FC38' : '#000000',
+        'line-width': 0.5,
+        'line-opacity': theme === 'dark' ? 0.8 : 0.3
       },
+    });
+
+    // Add labels layer
+    map.current.addLayer({
+      id: 'country-labels',
+      type: 'symbol',
+      source: 'countries',
+      layout: {
+        'text-field': ['get', 'ADMIN'],
+        'text-size': 11,
+        'text-justify': 'center',
+        'text-anchor': 'center',
+        'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+      },
+      paint: {
+        'text-color': theme === 'dark' ? '#ffffff' : '#000000',
+        'text-halo-color': theme === 'dark' ? '#000000' : '#ffffff',
+        'text-halo-width': 1
+      }
     });
 
     // Add interactions
@@ -151,6 +176,6 @@ export default function Map({ onCountryClick }: MapProps) {
         progress={loadingProgress}
         countryCount={Object.keys(countryColors).length}
       />
-    </div>
+      </div>
   );
 }

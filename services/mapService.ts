@@ -1,5 +1,5 @@
 import { fetchTopSongs } from '@/lib/api/itunes';
-import { hashColour } from '@/components/modules/hash_colours';
+import { generateColor } from '@/components/modules/hash_colours';
 import { getCountryCodes } from '@/components/modules/getCountryCode';
 
 interface MapServiceConfig {
@@ -82,10 +82,11 @@ class MapService {
         await this.semaphore.acquire();
         try {
           if (colors[isoCode]) return;
-          const songs = await fetchTopSongs(isoCode, 1);
-          colors[isoCode] = songs.length > 0 
-            ? hashColour(songs[0].title)
+          const songs = await fetchTopSongs(isoCode, 10); // Fetch top 10 songs
+          colors[isoCode] = 10 > 0 // Any songs found
+            ? generateColor(songs.map(song => song.title)) // Generate color based on song titles
             : '#6b8620';
+            songs.map(song => {console.log("song titles are:",song.title) })
           onProgress();
         } catch (error) {
           colors[isoCode] = '#6b8620';
@@ -128,4 +129,4 @@ class Semaphore {
   }
 }
 
-export default MapService; 
+export default MapService;

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, PauseCircle } from "lucide-react";
 import { useState, useRef } from "react";
 import type { Song } from "@/types";
+import { useTheme } from "@/components/theme-provider";
 
 interface SongDrawerProps {
   open: boolean;
@@ -23,6 +24,7 @@ interface SongDrawerProps {
 export function SongDrawer({ open, onOpenChange, country, songs, loading }: SongDrawerProps) {
   const [playingSongId, setPlayingSongId] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { theme } = useTheme();
 
   const handlePlayPause = (index: number, previewUrl: string) => {
     if (playingSongId === index) {
@@ -57,8 +59,8 @@ export function SongDrawer({ open, onOpenChange, country, songs, loading }: Song
 
   return (
     <Drawer open={open} onOpenChange={handleDrawerClose}>
-      <DrawerContent>
-        <div className="mx-auto w-full max-w-2xl px-4">
+      <DrawerContent className="max-h-[85vh]">
+        <div className="mx-auto w-auto max-w-[800px] px-4">
           <DrawerHeader className="pb-2">
             <DrawerTitle>
               {country ? `Top Songs in ${country.name}` : 'Select a country'}
@@ -68,17 +70,24 @@ export function SongDrawer({ open, onOpenChange, country, songs, loading }: Song
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="px-4">
+          <div className="px-4 overflow-y-auto">
             {loading ? (
               <div className="flex justify-center items-center p-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100" />
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-3">
                 {songs.map((song, index) => (
                   <div 
                     key={`${song.title}-${index}`} 
-                    className="flex items-center space-x-2 p-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200"
+                    className={`
+                      flex items-center space-x-2 p-2 rounded-lg 
+                      ${theme === 'dark' 
+                        ? 'bg-gray-800 hover:bg-gray-700' 
+                        : 'bg-white hover:bg-gray-50'
+                      } 
+                      shadow-sm hover:shadow-md transition-all duration-200
+                    `}
                   >
                     <div className="relative w-12 h-12 flex-shrink-0 group">
                       <img 
@@ -103,8 +112,12 @@ export function SongDrawer({ open, onOpenChange, country, songs, loading }: Song
                       </div>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate text-xs">{song.title}</div>
-                      <div className="text-xs text-gray-500 truncate">{song.artist}</div>
+                      <div className={`font-medium truncate text-xs ${theme === 'dark' ? 'text-gray-100' : 'text-gray-900'}`}>
+                        {song.title}
+                      </div>
+                      <div className={`text-xs truncate ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {song.artist}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -114,7 +127,9 @@ export function SongDrawer({ open, onOpenChange, country, songs, loading }: Song
 
           <DrawerFooter className="pt-4">
             <DrawerClose asChild>
-              <Button variant="outline">Close</Button>
+              <Button variant={theme === 'dark' ? 'outline' : 'secondary'}>
+                Close
+              </Button>
             </DrawerClose>
           </DrawerFooter>
         </div>
