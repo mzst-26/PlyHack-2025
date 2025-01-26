@@ -14,6 +14,7 @@ export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState<{ name: string; iso: string } | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isGlobe, setIsGlobe] = useState(false);
 
   const handleCountryClick = useCallback(async (countryData: { name: string; iso: string }) => {
     setSelectedCountry(countryData);
@@ -31,11 +32,22 @@ export default function Home() {
     }
   }, []);
 
+  const handleToggleProjection = useCallback(() => {
+    setIsGlobe(prev => !prev);
+  }, []);
+
   return (
     <MapProvider>
       <main className="fixed inset-0">
-        <FloatingMenu />
-        <Map onCountryClick={handleCountryClick} />
+        <FloatingMenu 
+          isGlobe={isGlobe} 
+          onToggleProjection={handleToggleProjection} 
+        />
+        <Map 
+          onCountryClick={handleCountryClick} 
+          isGlobe={isGlobe}
+          onToggleProjection={handleToggleProjection}
+        />
         <SongDrawer
           open={drawerOpen}
           onOpenChange={setDrawerOpen}

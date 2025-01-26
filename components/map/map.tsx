@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useMapContext } from '@/contexts/MapContext';
@@ -6,15 +6,20 @@ import { useTheme } from "@/components/theme-provider";
 import MapService from '@/services/mapService';
 import { MapLoadingIndicator } from './MapLoadingIndicator';
 import { fetchTopSongs } from "@/lib/api/itunes";
+import { Input } from "@/components/ui/input";
+import { Search, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Initialize mapbox
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
 interface MapProps {
   onCountryClick?: (countryData: { name: string; iso: string; color: string }) => void;
+  isGlobe: boolean;
+  onToggleProjection: () => void;
 }
 
-export default function Map({ onCountryClick }: MapProps) {
+export default function Map({ onCountryClick, isGlobe, onToggleProjection }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const { theme } = useTheme();
@@ -26,6 +31,8 @@ export default function Map({ onCountryClick }: MapProps) {
     loadingProgress,
     setLoadingProgress 
   } = useMapContext();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     if (!mapContainer.current) return;
@@ -42,7 +49,7 @@ export default function Map({ onCountryClick }: MapProps) {
         minZoom: 1,
         maxZoom: 3,
         projection: 'mercator',
-        renderWorldCopies: false,
+        renderWorldCopies: true,
         dragRotate: false,
         pitchWithRotate: false,
         pitch: 0,
@@ -77,6 +84,13 @@ export default function Map({ onCountryClick }: MapProps) {
       map.current?.remove();
     };
   }, [theme]);
+
+  useEffect(() => {
+    if (map.current) {
+      map.current.setProjection(isGlobe ? 'globe' : 'mercator');
+      map.current.setRenderWorldCopies(!isGlobe);
+    }
+  }, [isGlobe]);
 
   const setupMapLayers = async (colors: Record<string, string>) => {
     if (!map.current) return;
@@ -149,14 +163,89 @@ export default function Map({ onCountryClick }: MapProps) {
     });
   };
 
+  const handleSearch = useCallback(async (query: string) => {
+    if (!query || !map.current) return;
+
+    setIsSearching(true);
+    try {
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
+        `access_token=${mapboxgl.accessToken}&types=country`
+      );
+      
+      const data = await response.json();
+      
+      if (data.features && data.features.length > 0) {
+        const country = data.features[0];
+        map.current.flyTo({
+          center: country.center,
+          zoom: 3,
+          duration: 2000
+        });
+
+        const countryCode = country.properties.short_code?.toUpperCase();
+        if (countryCode && onCountryClick) {
+          setTimeout(() => {
+            onCountryClick({
+              name: country.text,
+              iso: countryCode,
+              color: countryColors[countryCode] || '#6b8620'
+            });
+          }, 1000);
+        }
+      }
+    } catch (error) {
+      console.error('Error searching country:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [countryColors, onCountryClick]);
+
+  // Add debounced search effect
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, handleSearch]);
+
   return (
     <div className="relative w-full h-screen">
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 w-72">
+        <div className="relative">
+          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+            {isSearching ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <Search className="h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
+          <Input
+            type="text"
+            placeholder="Search for a country..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={cn(
+              "w-full pl-9 pr-4",
+              "bg-white/90 dark:bg-gray-800/90",
+              "shadow-lg backdrop-blur-sm",
+              "border border-gray-200 dark:border-gray-700",
+              "placeholder:text-gray-500 dark:placeholder:text-gray-400",
+              "focus:ring-2 focus:ring-green-500 dark:focus:ring-green-400",
+              "transition-all duration-200"
+            )}
+          />
+        </div>
+      </div>
       <div ref={mapContainer} className="w-full h-full" />
       <MapLoadingIndicator 
         isLoading={isLoading}
         progress={loadingProgress}
         countryCount={Object.keys(countryColors).length}
       />
-      </div>
+    </div>
   );
 }
