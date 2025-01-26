@@ -47,7 +47,7 @@ export default function Map({ onCountryClick, isGlobe, onToggleProjection }: Map
         center: [0, 0],
         zoom: 2,
         minZoom: 1.5,
-        maxZoom: 4,
+        maxZoom: 6,
         projection: 'globe',
         renderWorldCopies: false,
         dragRotate: false,
