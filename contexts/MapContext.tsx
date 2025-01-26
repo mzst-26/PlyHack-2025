@@ -7,6 +7,7 @@ interface MapContextType {
   setIsLoading: (loading: boolean) => void;
   loadingProgress: number;
   setLoadingProgress: (progress: number) => void;
+  setColorMode: (mode: "hash" | "average") => void;
 }
 
 const MapContext = createContext<MapContextType | undefined>(undefined);
@@ -15,6 +16,7 @@ export function MapProvider({ children }: { children: React.ReactNode }) {
   const [countryColors, setCountryColors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [colorMode, setColorMode] = useState<"hash" | "average">("hash");
 
   return (
     <MapContext.Provider value={{
@@ -24,6 +26,7 @@ export function MapProvider({ children }: { children: React.ReactNode }) {
       setIsLoading,
       loadingProgress,
       setLoadingProgress,
+      setColorMode
     }}>
       {children}
     </MapContext.Provider>

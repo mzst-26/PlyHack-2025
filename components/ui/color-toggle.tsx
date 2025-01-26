@@ -11,7 +11,7 @@ import { Palette } from "lucide-react"
 import { useMapContext } from "@/contexts/MapContext"
 
 export function ColorToggle() {
-  const { colorMode, setColorMode, isLoading } = useMapContext()
+  const { setColorMode, isLoading } = useMapContext()
 
   return (
     <DropdownMenu>

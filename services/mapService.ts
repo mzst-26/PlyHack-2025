@@ -29,7 +29,7 @@ class MapService {
 
       const countryCodes = await getCountryCodes();
       const entries = Object.entries(countryCodes)
-        .map(([name, code]) => [name, code.toUpperCase()]);
+        .map(([name, code]): [string, string] => [name, code.toUpperCase()]);
       
       const colors: Record<string, string> = {};
       let processed = 0;
@@ -64,7 +64,7 @@ class MapService {
     return null;
   }
 
-  private createChunks<T>(array: T[], size: number): T[][] {
+  private createChunks<T extends [string, string]>(array: T[], size: number): T[][] {
     const chunks = [];
     for (let i = 0; i < array.length; i += size) {
       chunks.push(array.slice(i, i + size));
@@ -73,23 +73,23 @@ class MapService {
   }
 
   private async processChunks(
-    chunks: string[][],
+    chunks: Array<Array<[string, string]>>,
     colors: Record<string, string>,
     onProgress: () => void
   ) {
     await Promise.all(chunks.map(chunk => 
-      Promise.all(chunk.map(async ([_, isoCode]) => {
+      Promise.all(chunk.map(async (entry) => {
         await this.semaphore.acquire();
         try {
+          const isoCode = entry[1];
           if (colors[isoCode]) return;
-          const songs = await fetchTopSongs(isoCode, 10); // Fetch top 10 songs
-          colors[isoCode] = 10 > 0 // Any songs found
-            ? generateColor(songs.map(song => song.title)) // Generate color based on song titles
+          const songs = await fetchTopSongs(isoCode, 10);
+          colors[isoCode] = songs.length > 0
+            ? generateColor(songs.map(song => song.title))
             : '#6b8620';
-            songs.map(song => {console.log("song titles are:",song.title) })
           onProgress();
         } catch (error) {
-          colors[isoCode] = '#6b8620';
+          colors[entry[1]] = '#6b8620';
         } finally {
           this.semaphore.release();
         }
