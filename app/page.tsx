@@ -1,40 +1,57 @@
 "use client"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import dynamic from "next/dynamic";
-import 'mapbox-gl/dist/mapbox-gl.css'
-import { getCountryCodes } from "@/components/modules/getCountryCode";
+import { MapProvider } from "@/contexts/MapContext";
+import { fetchTopSongs } from "@/lib/api/itunes";
+import { SongDrawer } from "@/components/ui/SongDrawer";
+import type { Song } from "@/types";
 
-interface CountryCode {
-  [key: string]: string;
-}
+const Map = dynamic(() => import('../components/map/map'), { ssr: false });
 
 export default function Home() {
-  const [open, setOpen] = useState(true);
-  const [countryCodes, setCountryCodes] = useState<CountryCode>({});
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<{ name: string; iso: string } | null>(null);
+  const [songs, setSongs] = useState<Song[]>([]);
+  const [loading, setLoading] = useState(false);
   const isMobile = useIsMobile();
-  const Map = dynamic(() => import('../components/map/map'), { ssr: false });
 
-  useEffect(() => {
-    // Load country codes when component mounts
-    async function loadCountryCodes() {
-      const codes = await getCountryCodes();
-      setCountryCodes(codes);
-      console.log('Country Codes loaded:', codes);
+  const handleCountryClick = useCallback(async (countryData: { name: string; iso: string }) => {
+    setSelectedCountry(countryData);
+    setDrawerOpen(true);
+    setLoading(true);
+
+    try {
+      const songs = await fetchTopSongs(countryData.iso);
+      setSongs(songs);
+    } catch (error) {
+      console.error('Error fetching songs:', error);
+      setSongs([]);
+    } finally {
+      setLoading(false);
     }
-
-    loadCountryCodes();
-  }, []); // Empty dependency array means this runs once when component mounts
+  }, []);
 
   return (
-    <SidebarProvider open={open} onOpenChange={setOpen}>
-      <AppSidebar />
-      <main className="max-w-full overflow-hidden min-w-full min-h-full">
-        {!isMobile && <SidebarTrigger/>}
-        <Map />
-      </main>
-    </SidebarProvider>
+    <MapProvider>
+      <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
+        <AppSidebar />
+        <main className="max-w-full overflow-hidden min-w-full min-h-full">
+          {!isMobile && <SidebarTrigger/>}
+          <Map onCountryClick={handleCountryClick} />
+          <SongDrawer
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
+            country={selectedCountry}
+            songs={songs}
+            loading={loading}
+          />
+        </main>
+      </SidebarProvider>
+    </MapProvider>
   );
 }
+

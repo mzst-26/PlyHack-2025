@@ -4,18 +4,15 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { countryCode } = req.query;
+  const { countryCode, limit = '10' } = req.query;
   
   if (!countryCode || typeof countryCode !== 'string') {
     return res.status(400).json({ error: 'Country code is required' });
   }
 
   try {
-    console.log(`Fetching iTunes data for ${countryCode}...`);
-    
-    // Use a simpler iTunes API endpoint
-    const url = `https://itunes.apple.com/${countryCode.toLowerCase()}/rss/topsongs/limit=1/json`;
-    console.log('Requesting URL:', url);
+    const url = `https://itunes.apple.com/${countryCode.toLowerCase()}/rss/topsongs/limit=${limit}/json`;
+    console.log('Requesting iTunes:', url);
 
     const response = await fetch(url, {
       headers: {
@@ -25,23 +22,18 @@ export default async function handler(
     });
 
     if (!response.ok) {
-      console.error(`iTunes API error: ${response.status} ${response.statusText}`);
-      const text = await response.text();
-      console.error('Response:', text);
       throw new Error(`iTunes API responded with status: ${response.status}`);
     }
 
     const data = await response.json();
     
-    if (!data.feed || !data.feed.entry) {
-      console.error('Invalid data structure received:', JSON.stringify(data, null, 2));
+    if (!data.feed?.entry) {
       throw new Error('Invalid data structure from iTunes API');
     }
 
-    console.log(`Successfully fetched data for ${countryCode}`);
     res.status(200).json(data);
   } catch (error) {
-    console.error(`Detailed error for ${countryCode}:`, error);
+    console.error(`iTunes API error for ${countryCode}:`, error);
     res.status(500).json({ 
       error: 'Failed to fetch iTunes data',
       details: error.message,
