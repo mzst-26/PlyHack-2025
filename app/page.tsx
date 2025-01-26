@@ -14,7 +14,7 @@ export default function Home() {
   const [selectedCountry, setSelectedCountry] = useState<{ name: string; iso: string } | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isGlobe, setIsGlobe] = useState(false);
+  const [isGlobe, setIsGlobe] = useState(true);
 
   const handleCountryClick = useCallback(async (countryData: { name: string; iso: string }) => {
     setSelectedCountry(countryData);
