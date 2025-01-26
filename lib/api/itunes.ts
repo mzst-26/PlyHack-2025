@@ -6,9 +6,9 @@ interface iTunesResponse {
   };
 }
 
-export async function fetchTopSongs(countryCode: string, limit: number = 10): Promise<Song[]> {
+export async function fetchTopSongs(countryCode: string, limit: number): Promise<Song[]> {
   try {
-    const response = await fetch(`/api/itunes?countryCode=${countryCode}&limit=10`);
+    const response = await fetch(`/api/itunes?countryCode=${countryCode}&limit=${limit}`);
     
     if (!response.ok) {
       console.error(`API error for ${countryCode}: ${response.status}`);
