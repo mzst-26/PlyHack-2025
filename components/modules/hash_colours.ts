@@ -28,7 +28,7 @@ export const generateColor = (strings: string[]): string => {
     (numbers.length * (numbers.length + 1) / 2);
 
   // Map aggregated value to RGB using nonlinear scaling
-  const factor = 1.3; // Increase the scaling factor for more variation
+  const factor = 2.0; // Increase the scaling factor for more variation
   const adjustedValue = Math.pow(aggregatedValue, factor);
 
   const r = Math.floor((Math.sin(adjustedValue * 2 * Math.PI) + 1) * 127.5);
