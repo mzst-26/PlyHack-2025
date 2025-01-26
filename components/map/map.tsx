@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
 interface MapProps {
-  onCountryClick?: (countryData: { name: string; iso: string; color: string }) => void;
+  onCountryClick?: (countryData: { name: string; iso: string; color: string }, event: any) => void;
   isGlobe: boolean;
   onToggleProjection: () => void;
 }
@@ -40,7 +40,7 @@ export default function Map({ onCountryClick, isGlobe, onToggleProjection }: Map
     const initializeMap = async () => {
       // Initialize map
       map.current = new mapboxgl.Map({
-        container: mapContainer.current,
+        container: mapContainer.current!,
         style: theme === 'dark' 
           ? 'mapbox://styles/mapbox/dark-v11'
           : 'mapbox://styles/mapbox/light-v11',
@@ -148,7 +148,7 @@ export default function Map({ onCountryClick, isGlobe, onToggleProjection }: Map
             name: countryData.ADMIN,
             iso: countryData.ISO_A2,
             color: countryColors[countryData.ISO_A2]
-          });
+          }, e);
         }
       }
     });
@@ -190,7 +190,7 @@ export default function Map({ onCountryClick, isGlobe, onToggleProjection }: Map
               name: country.text,
               iso: countryCode,
               color: countryColors[countryCode] || '#6b8620'
-            });
+            }, null);
           }, 1000);
         }
       }

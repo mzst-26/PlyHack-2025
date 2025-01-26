@@ -16,13 +16,13 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [isGlobe, setIsGlobe] = useState(true);
 
-  const handleCountryClick = useCallback(async (countryData: { name: string; iso: string }) => {
+  const handleCountryClick = useCallback(async (countryData: { name: string; iso: string }, _event: any) => {
     setSelectedCountry(countryData);
     setDrawerOpen(true);
     setLoading(true);
 
     try {
-      const songs = await fetchTopSongs(countryData.iso);
+      const songs = await fetchTopSongs(countryData.iso, 10);
       setSongs(songs);
     } catch (error) {
       console.error('Error fetching songs:', error);
