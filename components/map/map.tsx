@@ -118,25 +118,6 @@ export default function Map({ onCountryClick }: MapProps) {
       },
     });
 
-    // Add labels layer
-    map.current.addLayer({
-      id: 'country-labels',
-      type: 'symbol',
-      source: 'countries',
-      layout: {
-        'text-field': ['get', 'ADMIN'],
-        'text-size': 11,
-        'text-justify': 'center',
-        'text-anchor': 'center',
-        'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
-      },
-      paint: {
-        'text-color': theme === 'dark' ? '#ffffff' : '#000000',
-        'text-halo-color': theme === 'dark' ? '#000000' : '#ffffff',
-        'text-halo-width': 1
-      }
-    });
-
     // Add interactions
     setupMapInteractions();
   };
