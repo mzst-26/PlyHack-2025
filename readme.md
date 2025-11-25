@@ -25,6 +25,8 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+This is a hosted version on Netlify:https://chartmap.netlify.app/
+
 ## Here is an example of how the map should look like:
 
 ![Screenshot 2025-01-26 at 11 12 28](https://github.com/user-attachments/assets/fed3e025-ed88-4b11-8cb1-e4443ed97a12)
